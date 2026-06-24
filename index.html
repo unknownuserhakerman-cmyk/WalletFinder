@@ -2,229 +2,273 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIP39 Wallet Checker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seed Hunter</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #0a0a14; --card: #12122a; --accent: #00ff9d; --red: #ff3355; --text: #ddd; }
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: #0f0f1a;
-            color: #e0e0e0;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 10px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card {
+            background: var(--card);
+            border-radius: 14px;
             padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #1a1a3a;
         }
-        .container {
-            max-width: 700px;
-            width: 100%;
-            background: #1a1a2e;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            margin-top: 20px;
-        }
-        h1 {
-            font-size: 1.5rem;
-            color: #00d4aa;
+        h1 { font-size: 1.3rem; color: var(--accent); text-align: center; margin-bottom: 4px; }
+        .subtitle { text-align: center; font-size: 0.75rem; color: #666; margin-bottom: 12px; }
+        
+        .seed-box {
+            background: #050510;
+            border-radius: 10px;
+            padding: 14px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
             text-align: center;
-            margin-bottom: 8px;
+            word-break: break-all;
+            border: 1px solid #1a1a3a;
+            min-height: 50px;
+            line-height: 1.5;
         }
-        .subtitle {
-            text-align: center;
-            color: #888;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-        }
-        .stats {
+        .seed-label { font-size: 0.7rem; color: #666; margin-bottom: 4px; text-align: center; }
+
+        .stats-row {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            margin: 12px 0;
         }
-        .stat-box {
-            background: #16213e;
-            border-radius: 10px;
-            padding: 12px;
+        .stat {
+            background: #0a0a1e;
+            border-radius: 8px;
+            padding: 10px 6px;
             text-align: center;
         }
-        .stat-box .label {
-            font-size: 0.7rem;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .stat-box .value {
+        .stat .num {
             font-size: 1.3rem;
-            font-weight: bold;
-            color: #00d4aa;
-            margin-top: 4px;
-            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: monospace;
         }
-        .log-box {
-            background: #0a0a1a;
-            border-radius: 10px;
-            padding: 12px;
-            height: 300px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
-            line-height: 1.6;
-            margin-bottom: 16px;
-            border: 1px solid #2a2a4a;
-        }
-        .log-box .found { color: #00ff88; font-weight: bold; }
-        .log-box .info { color: #888; }
-        .log-box .error { color: #ff5555; }
-        .controls {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-        .controls button {
+        .stat .lbl { font-size: 0.6rem; color: #666; text-transform: uppercase; margin-top: 2px; }
+
+        .btn-row { display: flex; gap: 10px; margin: 12px 0; }
+        .btn-row button {
             flex: 1;
-            padding: 12px 20px;
+            padding: 14px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
-            min-width: 100px;
-        }
-        #btnStart {
-            background: #00d4aa;
-            color: #0f0f1a;
-        }
-        #btnStart:hover { background: #00f0c0; }
-        #btnStart:disabled { background: #444; color: #888; cursor: not-allowed; }
-        #btnStop {
-            background: #ff5555;
-            color: white;
-        }
-        #btnStop:hover { background: #ff7777; }
-        #btnStop:disabled { background: #444; color: #888; cursor: not-allowed; }
-        .networks {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-        .networks label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: #16213e;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            border: 1px solid transparent;
             transition: 0.2s;
         }
-        .networks label.active { border-color: #00d4aa; }
-        .networks input { accent-color: #00d4aa; }
-        .speed-control {
+        #btnStart {
+            background: var(--accent);
+            color: #000;
+        }
+        #btnStart:disabled { background: #1a3a2a; color: #555; }
+        #btnStop {
+            background: var(--red);
+            color: #fff;
+        }
+        #btnStop:disabled { background: #2a1a1a; color: #555; }
+
+        #btnClear {
+            background: transparent;
+            color: #555;
+            border: 1px solid #333;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .net-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        .net-row label {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 4px;
+            background: #0a0a1e;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            border: 1px solid #1a1a3a;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .speed-control label { font-size: 0.85rem; color: #aaa; }
-        .speed-control input { flex: 1; accent-color: #00d4aa; }
-        .speed-control span { font-size: 0.85rem; color: #00d4aa; min-width: 30px; text-align: right; }
-        .footer {
-            text-align: center;
-            font-size: 0.7rem;
-            color: #555;
-            margin-top: 16px;
+        .net-row label.checked { border-color: var(--accent); background: #0a2a1e; }
+        .net-row input { accent-color: var(--accent); }
+
+        .speed-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
         }
-        .seed-display {
-            background: #16213e;
+        .speed-row input { flex: 1; accent-color: var(--accent); }
+        .speed-row span { font-size: 0.85rem; color: var(--accent); min-width: 24px; text-align: right; }
+
+        .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+        .tabs button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px 6px 0 0;
+            background: #0a0a1e;
+            color: #666;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .tabs button.active { background: var(--card); color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .log-box {
+            background: #050510;
             border-radius: 8px;
-            padding: 12px;
-            font-size: 0.85rem;
-            font-family: 'Courier New', monospace;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.7rem;
+            line-height: 1.5;
+            border: 1px solid #1a1a3a;
+        }
+        .log-box .found { color: var(--accent); font-weight: bold; }
+        .log-box .info { color: #666; }
+        .log-box .err { color: var(--red); }
+
+        #foundList {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .found-item {
+            background: #0a2a1e;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
             word-break: break-all;
-            margin-bottom: 12px;
-            min-height: 40px;
-            border: 1px solid #2a2a4a;
         }
-        .seed-label {
-            font-size: 0.7rem;
-            color: #888;
-            margin-bottom: 4px;
-        }
-        @media (max-width: 500px) {
-            .stats { grid-template-columns: 1fr 1fr; }
-            .container { padding: 16px; }
-        }
-        .faucet-note {
-            background: #2a1a1a;
-            border: 1px solid #553333;
+        .found-item .bal { color: var(--accent); font-weight: bold; font-size: 0.9rem; }
+        .found-item .addr { color: #888; font-size: 0.65rem; }
+        .found-item .seed-text { color: #aaa; font-size: 0.65rem; margin-top: 4px; }
+
+        .persist-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
             border-radius: 8px;
-            padding: 12px;
-            font-size: 0.8rem;
-            margin-bottom: 16px;
-            color: #ffaa77;
+            font-size: 0.7rem;
+            margin-bottom: 8px;
         }
+        .persist-bar.active { background: #0a2a1e; border: 1px solid var(--accent); color: var(--accent); }
+        .persist-bar.inactive { background: #1a1a0a; border: 1px solid #553; color: #aa8; }
+        .persist-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            display: inline-block;
+        }
+        .persist-bar.active .persist-dot { background: var(--accent); }
+        .persist-bar.inactive .persist-dot { background: #aa8; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .status-badge.running { background: #0a3a2a; color: var(--accent); }
+        .status-badge.stopped { background: #2a1a1a; color: var(--red); }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>🔐 BIP39 Wallet Scanner</h1>
-    <p class="subtitle">Generates random 12-word seeds and checks for balances</p>
-
-    <div class="faucet-note">
-        ⚠️ <strong>Educational purposes only.</strong> The odds of finding a funded wallet are astronomically low (~1 in 10³⁹). This tool demonstrates how HD wallet derivation works. Results are displayed in real-time.
-    </div>
-
-    <div class="stats">
-        <div class="stat-box">
-            <div class="label">Checked</div>
-            <div class="value" id="statChecked">0</div>
+    <div class="card" style="padding-bottom:8px">
+        <h1>☄️ Seed Hunter</h1>
+        <p class="subtitle">BIP39 12-word wallet scanner — Educational only</p>
+        
+        <div class="persist-bar" id="persistBar">
+            <span class="persist-dot"></span>
+            <span id="persistText">Checking background persistence...</span>
         </div>
-        <div class="stat-box">
-            <div class="label">Found</div>
-            <div class="value" id="statFound">0</div>
+
+        <div class="seed-label">Current seed</div>
+        <div class="seed-box" id="seedDisplay">—</div>
+
+        <div class="stats-row">
+            <div class="stat"><div class="num" id="statChecked">0</div><div class="lbl">Checked</div></div>
+            <div class="stat"><div class="num" id="statFound">0</div><div class="lbl">Found</div></div>
+            <div class="stat"><div class="num" id="statRate">0</div><div class="lbl">/sec</div></div>
+            <div class="stat"><div class="num" id="statTime">0s</div><div class="lbl">Runtime</div></div>
         </div>
-        <div class="stat-box">
-            <div class="label">Rate/sec</div>
-            <div class="value" id="statRate">0</div>
+
+        <div class="speed-row">
+            <label style="font-size:0.75rem;color:#888;">Threads:</label>
+            <input type="range" id="speedSlider" min="1" max="50" value="10">
+            <span id="speedLabel">10</span>
+        </div>
+
+        <div class="net-row" id="networks">
+            <label class="checked"><input type="checkbox" value="btc" checked> BTC</label>
+            <label class="checked"><input type="checkbox" value="eth" checked> ETH</label>
+            <label><input type="checkbox" value="bsc"> BSC</label>
+            <label><input type="checkbox" value="doge"> DOGE</label>
+            <label><input type="checkbox" value="ltc"> LTC</label>
+            <label><input type="checkbox" value="sol"> SOL</label>
+        </div>
+
+        <div class="btn-row">
+            <button id="btnStart">▶ START</button>
+            <button id="btnStop" disabled>■ STOP</button>
         </div>
     </div>
 
-    <div class="seed-label">Current seed being checked:</div>
-    <div class="seed-display" id="seedDisplay">—</div>
-
-    <div class="networks" id="networks">
-        <label class="active"><input type="checkbox" value="btc" checked> Bitcoin</label>
-        <label class="active"><input type="checkbox" value="eth" checked> Ethereum</label>
-        <label><input type="checkbox" value="bsc"> BSC</label>
-        <label><input type="checkbox" value="doge"> Dogecoin</label>
-        <label><input type="checkbox" value="ltc"> Litecoin</label>
+    <div class="card" style="padding:8px 16px 12px">
+        <div class="tabs">
+            <button class="active" data-tab="log">Activity Log</button>
+            <button data-tab="found">Found Wallets <span id="foundBadge" style="color:var(--accent)">(0)</span></button>
+        </div>
+        <div class="tab-content active" id="tabLog">
+            <div class="log-box" id="logBox">
+                <div class="info">[System] Ready. Tap START to begin.</div>
+            </div>
+        </div>
+        <div class="tab-content" id="tabFound">
+            <div id="foundList">
+                <div style="color:#555;text-align:center;padding:20px;font-size:0.85rem;">No wallets found yet</div>
+            </div>
+            <button id="btnClear" style="display:none">🗑️ Clear All Found Records</button>
+        </div>
     </div>
 
-    <div class="speed-control">
-        <label>Speed:</label>
-        <input type="range" id="speedSlider" min="1" max="20" value="5">
-        <span id="speedLabel">5</span>
+    <div style="text-align:center;font-size:0.6rem;color:#333;margin:8px 0 20px">
+        Seed Hunter v2.0 — For educational & authorized testing only
     </div>
-
-    <div class="controls">
-        <button id="btnStart">▶ Start</button>
-        <button id="btnStop" disabled>■ Stop</button>
-    </div>
-
-    <div class="log-box" id="logBox">
-        <div class="info">[System] Ready. Press Start to begin scanning.</div>
-    </div>
-
-    <div class="footer">BIP39 Wallet Scanner | For authorized testing only</div>
 </div>
 
-<script src="wallet.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
