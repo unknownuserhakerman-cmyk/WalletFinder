@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://blockchain.info https://api.etherscan.io https://api.bscscan.com https://chain.so https://public-api.solscan.io;"
+    Service-Worker-Allowed = "/"
