@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIP39 Wallet Checker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            margin-top: 20px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: #00d4aa;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #16213e;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-box .label {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stat-box .value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00d4aa;
+            margin-top: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .log-box {
+            background: #0a0a1a;
+            border-radius: 10px;
+            padding: 12px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            border: 1px solid #2a2a4a;
+        }
+        .log-box .found { color: #00ff88; font-weight: bold; }
+        .log-box .info { color: #888; }
+        .log-box .error { color: #ff5555; }
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .controls button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+        #btnStart {
+            background: #00d4aa;
+            color: #0f0f1a;
+        }
+        #btnStart:hover { background: #00f0c0; }
+        #btnStart:disabled { background: #444; color: #888; cursor: not-allowed; }
+        #btnStop {
+            background: #ff5555;
+            color: white;
+        }
+        #btnStop:hover { background: #ff7777; }
+        #btnStop:disabled { background: #444; color: #888; cursor: not-allowed; }
+        .networks {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .networks label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #16213e;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .networks label.active { border-color: #00d4aa; }
+        .networks input { accent-color: #00d4aa; }
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .speed-control label { font-size: 0.85rem; color: #aaa; }
+        .speed-control input { flex: 1; accent-color: #00d4aa; }
+        .speed-control span { font-size: 0.85rem; color: #00d4aa; min-width: 30px; text-align: right; }
+        .footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #555;
+            margin-top: 16px;
+        }
+        .seed-display {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin-bottom: 12px;
+            min-height: 40px;
+            border: 1px solid #2a2a4a;
+        }
+        .seed-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        @media (max-width: 500px) {
+            .stats { grid-template-columns: 1fr 1fr; }
+            .container { padding: 16px; }
+        }
+        .faucet-note {
+            background: #2a1a1a;
+            border: 1px solid #553333;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.8rem;
+            margin-bottom: 16px;
+            color: #ffaa77;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔐 BIP39 Wallet Scanner</h1>
+    <p class="subtitle">Generates random 12-word seeds and checks for balances</p>
+
+    <div class="faucet-note">
+        ⚠️ <strong>Educational purposes only.</strong> The odds of finding a funded wallet are astronomically low (~1 in 10³⁹). This tool demonstrates how HD wallet derivation works. Results are displayed in real-time.
+    </div>
+
+    <div class="stats">
+        <div class="stat-box">
+            <div class="label">Checked</div>
+            <div class="value" id="statChecked">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Found</div>
+            <div class="value" id="statFound">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Rate/sec</div>
+            <div class="value" id="statRate">0</div>
+        </div>
+    </div>
+
+    <div class="seed-label">Current seed being checked:</div>
+    <div class="seed-display" id="seedDisplay">—</div>
+
+    <div class="networks" id="networks">
+        <label class="active"><input type="checkbox" value="btc" checked> Bitcoin</label>
+        <label class="active"><input type="checkbox" value="eth" checked> Ethereum</label>
+        <label><input type="checkbox" value="bsc"> BSC</label>
+        <label><input type="checkbox" value="doge"> Dogecoin</label>
+        <label><input type="checkbox" value="ltc"> Litecoin</label>
+    </div>
+
+    <div class="speed-control">
+        <label>Speed:</label>
+        <input type="range" id="speedSlider" min="1" max="20" value="5">
+        <span id="speedLabel">5</span>
+    </div>
+
+    <div class="controls">
+        <button id="btnStart">▶ Start</button>
+        <button id="btnStop" disabled>■ Stop</button>
+    </div>
+
+    <div class="log-box" id="logBox">
+        <div class="info">[System] Ready. Press Start to begin scanning.</div>
+    </div>
+
+    <div class="footer">BIP39 Wallet Scanner | For authorized testing only</div>
+</div>
+
+<script src="wallet.js"></script>
+</body>
+</html>
